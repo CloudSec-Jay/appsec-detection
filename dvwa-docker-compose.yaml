@@ -1,0 +1,22 @@
+version: '3'
+services:
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: dvwa
+    ports:
+      - "80:80"
+    volumes:
+      # Mount logs to host for Wazuh monitoring
+      - /var/log/dvwa/apache:/var/log/apache2
+      - /var/log/dvwa/mysql:/var/log/mysql
+    labels:
+      - "wazuh.monitor=true"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "wazuh.monitor"
+
+
+
