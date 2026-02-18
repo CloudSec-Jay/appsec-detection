@@ -1,0 +1,29 @@
+---
+#Drops brute force attempts and notify via slack 
+
+- name: Automated Incident Response
+  hosts: "{{ target_host }}"
+  tasks:
+    - name: Isolate compromised host
+      iptables:
+        chain: INPUT
+        policy: DROP
+
+    - name: Collect forensic evidence
+      archive:
+        path: /var/log
+        dest: /forensics/{{ ansible_hostname }}-{{ ansible_date_time.epoch }}.tar.gz
+
+    - name: Send to S3 for analysis
+      aws_s3:
+        bucket: incident-response-forensics
+        object: "{{ ansible_hostname }}-{{ ansible_date_time.epoch }}.tar.gz"
+        src: /forensics/{{ ansible_hostname }}-{{ ansible_date_time.epoch }}.tar.gz
+
+    - name: Notify security team
+      uri:
+        url: https://hooks.slack.com/services/YOUR/WEBHOOK
+        method: POST
+        body_format: json
+        body:
+          text: "Host {{ ansible_hostname }} isolated - forensics collected"
